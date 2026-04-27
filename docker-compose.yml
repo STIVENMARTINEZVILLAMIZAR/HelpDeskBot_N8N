@@ -9,6 +9,7 @@ services:
       - .env
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./workflows:/workflows
 
 volumes:
   n8n_data:

@@ -1,0 +1,372 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "lookup",
+        "sheetId": "REEMPLAZAR_CON_TU_ID",
+        "range": "USUARIOS!A:E",
+        "lookupColumn": "telegram_user",
+        "lookupValue": "={{$json[\"message\"][\"from\"][\"id\"]}}",
+        "options": {}
+      },
+      "name": "Validar Usuario",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        20,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "lookup",
+        "sheetId": "REEMPLAZAR_CON_TU_ID",
+        "range": "LOGS!A:E",
+        "lookupColumn": "telegram_user",
+        "lookupValue": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"id\"]}}",
+        "options": {
+          "sort": [
+            {
+              "column": "timestamp",
+              "direction": "DESC"
+            }
+          ]
+        }
+      },
+      "name": "Obtener Estado Actual",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"pantalla\"] || 'IDLE'}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "IDLE",
+              "output": 0
+            },
+            {
+              "value2": "MENU_PRINCIPAL",
+              "output": 1
+            },
+            {
+              "value2": "CREAR_TIPO",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "name": "Router de Estados",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"id\"]}}",
+        "text": "Hola, soy HelpDeskBot 👋\n\nEstoy aquí para ayudarte con solicitudes de soporte de forma rápida y ordenada.\n\nPor favor escribe el número de la opción que quieras usar.\n\nMenú principal:\n0. Ayuda\n1. Crear solicitud\n2. Consultar estado\n3. Mis solicitudes\n4. Reportes\n5. Configuración",
+        "replyMarkup": "ReplyKeyboardMarkup",
+        "keyBoard": "1, 2, 3\n4, 5, 0",
+        "resizeKeyboard": true
+      },
+      "name": "Enviar Menú Principal",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        750,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "REEMPLAZAR_CON_TU_ID",
+        "range": "LOGS!A:E",
+        "fields": [
+          "timestamp",
+          "telegram_user",
+          "pantalla"
+        ],
+        "values": {
+          "field": [
+            {
+              "name": "timestamp",
+              "value": "={{$now}}"
+            },
+            {
+              "name": "telegram_user",
+              "value": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"id\"]}}"
+            },
+            {
+              "name": "pantalla",
+              "value": "MENU_PRINCIPAL"
+            }
+          ]
+        }
+      },
+      "name": "Actualizar Log a Menu",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        1000,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"text\"].toInt()}}",
+              "operation": "equal",
+              "value2": 1
+            }
+          ]
+        }
+      },
+      "name": "Opción 1: Crear?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"id\"]}}",
+        "text": "Vamos a crear una solicitud.\n\nSelecciona el tipo:\n1. Soporte técnico\n2. Solicitud administrativa\n3. Consulta general\n9. Cancelar",
+        "replyMarkup": "ReplyKeyboardMarkup",
+        "keyBoard": "1, 2, 3\n9",
+        "resizeKeyboard": true
+      },
+      "name": "Preguntar Tipo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "REEMPLAZAR_CON_TU_ID",
+        "range": "LOGS!A:E",
+        "fields": [
+          "timestamp",
+          "telegram_user",
+          "pantalla",
+          "resultado"
+        ],
+        "values": {
+          "field": [
+            {
+              "name": "timestamp",
+              "value": "={{$now}}"
+            },
+            {
+              "name": "telegram_user",
+              "value": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"id\"]}}"
+            },
+            {
+              "name": "pantalla",
+              "value": "CREAR_TIPO"
+            }
+          ]
+        }
+      },
+      "name": "Actualizar Log a Wizard 1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        1220,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"id\"]}}",
+        "text": "Ahora selecciona la prioridad:\n1. Alta\n2. Media\n3. Baja",
+        "replyMarkup": "ReplyKeyboardMarkup",
+        "keyBoard": "1, 2, 3",
+        "resizeKeyboard": true
+      },
+      "name": "Preguntar Prioridad",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        750,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "REEMPLAZAR_CON_TU_ID",
+        "range": "LOGS!A:E",
+        "fields": [
+          "timestamp",
+          "telegram_user",
+          "pantalla",
+          "resultado"
+        ],
+        "values": {
+          "field": [
+            {
+              "name": "timestamp",
+              "value": "={{$now}}"
+            },
+            {
+              "name": "telegram_user",
+              "value": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"from\"][\"id\"]}}"
+            },
+            {
+              "name": "pantalla",
+              "value": "CREAR_PRIORIDAD"
+            },
+            {
+              "name": "resultado",
+              "value": "={{$node[\"Telegram Trigger\"].json[\"message\"][\"text\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Log Tipo y Mover a Prioridad",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        1000,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Obtener Estado Actual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Estado Actual": {
+      "main": [
+        [
+          {
+            "node": "Router de Estados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router de Estados": {
+      "main": [
+        [
+          {
+            "node": "Enviar Menú Principal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Opción 1: Crear?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preguntar Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Menú Principal": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Log a Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Opción 1: Crear?": {
+      "main": [
+        [
+          {
+            "node": "Preguntar Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preguntar Tipo": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Log a Wizard 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preguntar Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Log Tipo y Mover a Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
