@@ -1,0 +1,9 @@
+.env
+.n8n/
+node_modules/
+dist/
+coverage/
+tmp/
+*.log
+*.sqlite
+*.db
