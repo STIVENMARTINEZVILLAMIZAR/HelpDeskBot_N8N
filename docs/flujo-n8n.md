@@ -8,6 +8,23 @@ Si quieres contrastar este diseno esperado con el flujo que ya tienes montado, r
 
 Recibir mensajes desde Telegram, interpretar opciones numericas, validar al usuario y ejecutar acciones sobre `Google Sheets` para registrar, consultar y reportar solicitudes.
 
+## Implementacion actual del JSON exportado
+
+El archivo [workflows/helpdeskbot-main.json](/home/zeven/Documentos/HelpDeskBot_N8N/workflows/helpdeskbot-main.json) ya incluye una version mas grande del flujo con estas caracteristicas:
+
+- Validacion de usuario activo en `USUARIOS`.
+- Reconstruccion del estado conversacional usando `LOGS`.
+- Menu principal completo.
+- Wizard de creacion de tickets hasta guardar en `SOLICITUDES`.
+- Consulta de ticket por `id_ticket`.
+- Opcion `Mis solicitudes`.
+- Opcion `Reportes` restringida por rol.
+- Opcion `Configuracion`.
+- Cancelaciones e intentos invalidos registrados en `LOGS`.
+- `Sticky Notes` para que el canvas quede mas ordenado y presentable.
+
+Antes de usarlo en `n8n`, reemplaza el valor `REEMPLAZAR_CON_ID_DOCUMENTO` por el ID real del Google Sheet `HelpDeskBot_DB`.
+
 ## Flujo principal
 
 ```mermaid
@@ -188,3 +205,33 @@ Para que el wizard funcione bien entre varios mensajes, necesitas manejar el est
 3. Agregando una hoja opcional de sesiones si el proyecto crece.
 
 Si la entrega academica exige respetar exactamente el modelo de datos dado, la opcion mas segura es documentar el estado en `LOGS` y mantener el flujo lo mas simple posible.
+
+## Estados conversacionales usados en esta version
+
+Esta implementacion usa `LOGS` como memoria conversacional. Las pantallas principales que se reconstruyen son:
+
+- `MENU_PRINCIPAL`
+- `CREAR_TIPO`
+- `CREAR_PRIORIDAD`
+- `CREAR_DESCRIPCION`
+- `CREAR_CONFIRMACION`
+- `CONSULTAR_TICKET`
+
+La idea es simple:
+
+1. Cada vez que el bot muestra un paso, registra una fila con `resultado = PENDIENTE`.
+2. Cuando el usuario responde, el workflow guarda la respuesta y marca el siguiente paso como `PENDIENTE`.
+3. Al llegar un nuevo mensaje, el flujo busca la ultima pantalla pendiente del usuario y continua desde ahi.
+
+## Configuracion minima en n8n
+
+Despues de importar el workflow:
+
+1. Asigna tu credencial de Telegram en el nodo `Telegram Trigger` y en los nodos `Responder ...`.
+2. Asigna tu credencial de Google Sheets en todos los nodos `Buscar`, `Leer`, `Guardar`.
+3. Verifica que existan exactamente estas hojas:
+   - `USUARIOS`
+   - `SOLICITUDES`
+   - `LOGS`
+4. Revisa que los encabezados coincidan con el modelo de datos definido en el proyecto.
+5. Haz una primera prueba con `/start` desde Telegram para que el bot vuelva a `MENU_PRINCIPAL`.

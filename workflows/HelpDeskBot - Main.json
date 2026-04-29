@@ -1,0 +1,2882 @@
+{
+  "name": "HelpDeskBot - Main",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 1. Entrada y validacion\\nTelegram Trigger, normalizacion del mensaje, validacion del usuario y lectura del historial en `LOGS`.",
+        "height": 760,
+        "width": 960,
+        "color": 7
+      },
+      "name": "Nota Entrada",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5408,
+        3056
+      ],
+      "id": "8ee849a3-9a88-4768-93ac-fbbb826c675b"
+    },
+    {
+      "parameters": {
+        "content": "## 2. Router de estados\\nEl estado conversacional se reconstruye usando la ultima pantalla pendiente registrada en `LOGS`.",
+        "height": 760,
+        "width": 760,
+        "color": 6
+      },
+      "name": "Nota Router",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        6496,
+        3056
+      ],
+      "id": "4f2a836c-bbda-416b-be0a-3401167a6291"
+    },
+    {
+      "parameters": {
+        "content": "## 3. Menu principal y opciones\\nAyuda, crear solicitud, consultar ticket, mis solicitudes, reportes y configuracion.",
+        "height": 1320,
+        "width": 1840,
+        "color": 5
+      },
+      "name": "Nota Menu",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        7392,
+        3056
+      ],
+      "id": "74087598-bdda-4627-8ae0-b8bf0af64466"
+    },
+    {
+      "parameters": {
+        "content": "## 4. Wizard de creacion\\nTipo -> Prioridad -> Descripcion -> Confirmacion -> Registro en `SOLICITUDES`.",
+        "height": 1640,
+        "width": 1880,
+        "color": 4
+      },
+      "name": "Nota Wizard",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        7392,
+        4496
+      ],
+      "id": "81de6356-6ae6-434f-acfd-9a7cb3417926"
+    },
+    {
+      "parameters": {
+        "content": "## 5. Respuestas y persistencia\\nTodos los caminos terminan enviando mensajes a Telegram y guardando trazabilidad en `LOGS`.",
+        "height": 940,
+        "width": 1180,
+        "color": 3
+      },
+      "name": "Nota Salidas",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        9440,
+        5488
+      ],
+      "id": "eb1deaab-dd62-4c19-9de6-66038d1b24c6"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        5568,
+        3296
+      ],
+      "id": "fa76df67-fc59-4ebd-86f9-727f372a9288",
+      "webhookId": "3e41ba15-78bc-409c-8180-3d19fc8856b6",
+      "credentials": {
+        "telegramApi": {
+          "id": "XMlcxQ0bxqfb7urt",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message ?? {}; const from = msg.from ?? {}; const text = String(msg.text ?? '').trim(); return [{ json: { chat_id: String(from.id ?? msg.chat?.id ?? ''), telegram_user: String(from.id ?? ''), telegram_username: from.username ? `@${from.username}` : '', first_name: from.first_name ?? 'Usuario', raw_text: String(msg.text ?? ''), message_text: text, normalized_text: text.toUpperCase(), message_id: msg.message_id ?? null, received_at: new Date().toISOString() } }];"
+      },
+      "name": "Normalizar Entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5808,
+        3296
+      ],
+      "id": "4dc4e072-397a-4c4f-867b-947c47b1587d"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 642152754,
+          "mode": "list",
+          "cachedResultName": "USUARIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=642152754"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "telegram_user",
+              "lookupValue": "={{$json.telegram_user}}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "name": "Buscar Usuario",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        6048,
+        3296
+      ],
+      "settings": {
+        "alwaysOutputData": true
+      },
+      "id": "73425bd6-b20b-4a60-abf4-b130e691b695",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oa7aEmmBE4za1VSa",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Normalizar Entrada').first().json;\nconst user = $('Buscar Usuario').first().json || {};\n\nconst exists = !!user.row_number;\nconst activoDb = String(user.activo ?? '').trim().toUpperCase();\nconst active = ['SI', 'TRUE', '1', 'ACTIVO'].includes(activoDb);\n\nreturn [\n  {\n    json: {\n      ...base,\n      nombre: user.nombre || base.first_name,\n      rol: String(user.rol || 'usuario').toUpperCase(),\n      activo: activoDb || 'NO',\n      user_exists: exists,\n      user_active: exists && active,\n      user_route: exists && active ? 'ACTIVE' : 'BLOCKED',\n      debug_row_number: user.row_number ?? null,\n      debug_activo_db: activoDb,\n    }\n  }\n];\n"
+      },
+      "name": "Validar Usuario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6288,
+        3296
+      ],
+      "id": "d76f5dcd-e3d1-4f0b-a0fe-b9a290ca36f1"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"user_route\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "ACTIVE"
+            },
+            {
+              "value2": "BLOCKED",
+              "output": 1
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "name": "Router Usuario",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        6528,
+        3296
+      ],
+      "id": "47dee596-9088-4f9e-ba84-eead802e53b9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Validar Usuario').first().json; const reason = ctx.user_exists ? 'Tu usuario esta registrado pero no se encuentra activo.' : 'No encontre tu usuario en la hoja USUARIOS.'; return [{ json: { ...ctx, reply_text: `Hola ${ctx.first_name}.\\n\\n${reason}\\n\\nPidele al administrador que revise tu acceso antes de continuar.` } }];"
+      },
+      "name": "Preparar Acceso Denegado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6800,
+        3440
+      ],
+      "id": "5b146a24-5d5c-4173-b342-3e0bb7071a0a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Validar Usuario').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'ACCESO', opcion: ctx.message_text || '', resultado: ctx.user_exists ? 'USUARIO_INACTIVO' : 'USUARIO_NO_REGISTRADO' } }];"
+      },
+      "name": "Log Acceso Denegado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6800,
+        3600
+      ],
+      "id": "5eed0368-48d2-4b52-a4d3-8b831586da6d"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 760625551,
+          "mode": "list",
+          "cachedResultName": "LOGS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=760625551"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "telegram_user",
+              "lookupValue": "={{$json.telegram_user}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Leer Logs Usuario",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        6800,
+        3200
+      ],
+      "settings": {
+        "alwaysOutputData": true
+      },
+      "id": "953b6a67-6b84-4613-85e0-14f105400da9",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oa7aEmmBE4za1VSa",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Validar Usuario').first().json; const logs = $input.all().map(item => item.json).filter(log => log && Object.keys(log).length > 0 && log.timestamp).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); const text = String(ctx.message_text || '').trim(); const normalized = String(ctx.normalized_text || '').trim(); const forceMenuValues = ['/START', '/MENU', 'MENU', 'INICIO']; let route_state = 'SHOW_MENU'; if (!text || forceMenuValues.includes(normalized)) { route_state = 'SHOW_MENU'; } else { const pending = [...logs].reverse().find(log => ['CREAR_TIPO', 'CREAR_PRIORIDAD', 'CREAR_DESCRIPCION', 'CREAR_CONFIRMACION', 'CONSULTAR_TICKET'].includes(String(log.pantalla || '')) && String(log.resultado || '').toUpperCase() === 'PENDIENTE'); if (pending) { route_state = String(pending.pantalla); } else if (logs.length === 0) { route_state = 'SHOW_MENU'; } else { route_state = 'MENU_PRINCIPAL'; } } const wizardStart = [...logs].reverse().find(log => String(log.pantalla || '') === 'CREAR_TIPO' && String(log.resultado || '').toUpperCase() === 'PENDIENTE')?.timestamp; const wizardLogs = wizardStart ? logs.filter(log => new Date(log.timestamp) >= new Date(wizardStart)) : []; const lastType = [...wizardLogs].reverse().find(log => String(log.pantalla || '') === 'CREAR_TIPO' && !['PENDIENTE', 'INVALIDO', 'CANCELADO'].includes(String(log.resultado || '').toUpperCase())); const lastPriority = [...wizardLogs].reverse().find(log => String(log.pantalla || '') === 'CREAR_PRIORIDAD' && !['PENDIENTE', 'INVALIDO', 'CANCELADO'].includes(String(log.resultado || '').toUpperCase())); const lastDescription = [...wizardLogs].reverse().find(log => String(log.pantalla || '') === 'CREAR_DESCRIPCION' && !['PENDIENTE', 'INVALIDA', 'INVALIDO', 'CANCELADO'].includes(String(log.resultado || '').toUpperCase())); const canReport = ['ADMIN', 'SOPORTE', 'COORDINADOR'].includes(String(ctx.rol || '').trim().toUpperCase()); return [{ json: { ...ctx, route_state, menu_option: text, wizard_type: lastType?.resultado || '', wizard_priority: lastPriority?.resultado || '', wizard_description: lastDescription?.resultado || '', can_report: canReport ? 'ALLOW' : 'DENY' } }];"
+      },
+      "name": "Resolver Estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7056,
+        3200
+      ],
+      "id": "f1b127b7-e110-44e4-86a8-e30bd1fa62fb"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"route_state\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "SHOW_MENU"
+            },
+            {
+              "value2": "MENU_PRINCIPAL",
+              "output": 1
+            },
+            {
+              "value2": "CREAR_TIPO",
+              "output": 2
+            },
+            {
+              "value2": "CREAR_PRIORIDAD",
+              "output": 3
+            },
+            {
+              "value2": "CREAR_DESCRIPCION",
+              "output": 3
+            },
+            {
+              "value2": "CREAR_CONFIRMACION",
+              "output": 3
+            },
+            {
+              "value2": "CONSULTAR_TICKET",
+              "output": 3
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "name": "Router de Estado",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7296,
+        3200
+      ],
+      "id": "9ed6b6bb-4e9a-41a9-be2f-47465b403578"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { ...ctx, reply_text: `Hola, soy HelpDeskBot 👋\\n\\nEstoy aqui para ayudarte con solicitudes de soporte de forma rapida y ordenada.\\n\\nPor favor escribe el numero de la opcion que quieras usar.\\n\\nMenu principal:\\n0. Ayuda\\n1. Crear solicitud\\n2. Consultar estado de solicitud\\n3. Mis solicitudes\\n4. Reportes\\n5. Configuracion` } }];"
+      },
+      "name": "Preparar Menu Principal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7600,
+        3072
+      ],
+      "id": "692c004e-c803-444b-aa56-b89b137fbd07"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: ctx.message_text || '', resultado: 'MOSTRADO' } }];"
+      },
+      "name": "Log Menu Principal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7600,
+        3248
+      ],
+      "id": "4776b557-22da-4bed-ab38-11adda4c8c18"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"menu_option\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "0"
+            },
+            {
+              "value2": "1",
+              "output": 1
+            },
+            {
+              "value2": "2",
+              "output": 2
+            },
+            {
+              "value2": "3",
+              "output": 3
+            },
+            {
+              "value2": "4",
+              "output": 3
+            },
+            {
+              "value2": "5",
+              "output": 3
+            }
+          ]
+        },
+        "fallbackOutput": 6
+      },
+      "name": "Router Opcion Menu",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7600,
+        3488
+      ],
+      "id": "417fe079-3e70-4a3c-af60-9dfb42bbb1e4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { ...ctx, reply_text: `Ayuda HelpDeskBot\\n\\nEscribe solamente el numero de la opcion que quieres usar.\\n\\n0. Ayuda\\n1. Crear solicitud\\n2. Consultar estado de solicitud\\n3. Mis solicitudes\\n4. Reportes\\n5. Configuracion\\n\\nSi estas en un paso del wizard, usa 9 para cancelar.` } }];"
+      },
+      "name": "Preparar Ayuda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        3168
+      ],
+      "id": "bb2993d3-df1d-42cb-be9d-30af51c8ae14"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: '0', resultado: 'AYUDA' } }];"
+      },
+      "name": "Log Ayuda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        3328
+      ],
+      "id": "453aebf2-6941-4c4e-a9b2-b8df40070595"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { ...ctx, reply_text: `Vamos a crear una solicitud.\\n\\nSelecciona el tipo:\\n1. Soporte tecnico\\n2. Solicitud administrativa\\n3. Consulta general\\n9. Cancelar` } }];"
+      },
+      "name": "Preparar Inicio Crear",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        3488
+      ],
+      "id": "c841966c-667f-4f14-9424-5a5b06a76a09"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const base = Date.now(); return [{ json: { timestamp: new Date(base).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: '1', resultado: 'CREAR_SOLICITUD' } }, { json: { timestamp: new Date(base + 1).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_TIPO', opcion: '', resultado: 'PENDIENTE' } }];"
+      },
+      "name": "Log Inicio Crear",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        3648
+      ],
+      "id": "4385e5ad-dc3a-4eb8-82b7-77eeba6ee8bb"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { ...ctx, reply_text: `Escribe el ID del ticket que quieres consultar.\\n\\nEjemplo: HD-20260428-101530\\n\\n9. Cancelar` } }];"
+      },
+      "name": "Preparar Consulta Ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        3808
+      ],
+      "id": "89d4d95b-0470-4933-b6dd-6c6f73d04d6f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const base = Date.now(); return [{ json: { timestamp: new Date(base).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: '2', resultado: 'CONSULTAR_TICKET' } }, { json: { timestamp: new Date(base + 1).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CONSULTAR_TICKET', opcion: '', resultado: 'PENDIENTE' } }];"
+      },
+      "name": "Log Consulta Pendiente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        3968
+      ],
+      "id": "8ef2011a-ef0c-46ca-ba45-8458404f4d0d"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY",
+          "mode": "list",
+          "cachedResultName": "HelpDeskN8NBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "SOLICITUDES",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "creado_por",
+              "lookupValue": "={{$json.telegram_user}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Buscar Mis Solicitudes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        7920,
+        4128
+      ],
+      "settings": {
+        "alwaysOutputData": true
+      },
+      "id": "1b7e59f5-0263-4c15-98e7-0f869d8173e2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oa7aEmmBE4za1VSa",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const rows = $input.all().map(item => item.json).filter(row => row && String(row.id_ticket || '').trim() !== '').sort((a, b) => new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0)); const recent = rows.slice(0, 5).map(row => `- ${row.id_ticket} | ${row.estado || 'Sin estado'} | ${row.prioridad || 'Sin prioridad'} | ${row.tipo || 'Sin tipo'}`).join('\\n'); const reply = rows.length ? `Estas son tus solicitudes mas recientes:\\n\\n${recent}\\n\\nTotal registradas: ${rows.length}` : 'Aun no tienes solicitudes registradas en la hoja SOLICITUDES.'; return [{ json: { ...ctx, reply_text: reply, total_solicitudes: rows.length } }];"
+      },
+      "name": "Formatear Mis Solicitudes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        4128
+      ],
+      "id": "b8aed704-7c15-4440-975d-cf93fb7b2599"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Formatear Mis Solicitudes').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: data.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: '3', resultado: `MIS_SOLICITUDES:${data.total_solicitudes}` } }];"
+      },
+      "name": "Log Mis Solicitudes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        4128
+      ],
+      "id": "6b241e95-0fef-4d48-96e6-f022acdcf5fc"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"can_report\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "ALLOW"
+            },
+            {
+              "value2": "DENY",
+              "output": 1
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "name": "Router Reportes Permitidos",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7920,
+        4416
+      ],
+      "id": "49552a9b-2920-44ef-9104-b75ec26feba7"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY",
+          "mode": "list",
+          "cachedResultName": "HelpDeskN8NBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2123922350,
+          "mode": "list",
+          "cachedResultName": "SOLICITUDES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=2123922350"
+        },
+        "options": {}
+      },
+      "name": "Leer Solicitudes Reporte",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        8160,
+        4336
+      ],
+      "settings": {
+        "alwaysOutputData": true
+      },
+      "id": "60fa0b56-61bc-47b3-9f70-b3a9889b6381",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oa7aEmmBE4za1VSa",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const rows = $input.all().map(item => item.json).filter(row => row && String(row.id_ticket || '').trim() !== ''); const countBy = (field) => rows.reduce((acc, row) => { const key = String(row[field] || 'Sin dato'); acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const format = (obj) => Object.entries(obj).map(([key, value]) => `- ${key}: ${value}`).join('\\n') || '- Sin datos'; const byEstado = countBy('estado'); const byPrioridad = countBy('prioridad'); const byTipo = countBy('tipo'); const reply = rows.length ? `Reporte basico HelpDeskBot\\n\\nTotal de solicitudes: ${rows.length}\\n\\nPor estado:\\n${format(byEstado)}\\n\\nPor prioridad:\\n${format(byPrioridad)}\\n\\nPor tipo:\\n${format(byTipo)}` : 'No hay solicitudes registradas para construir el reporte.'; return [{ json: { ...ctx, reply_text: reply, total_reporte: rows.length } }];"
+      },
+      "name": "Construir Reporte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        4336
+      ],
+      "id": "2871135a-3f92-4c12-b237-a9a6992de30b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Construir Reporte').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: data.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: '4', resultado: `REPORTE:${data.total_reporte}` } }];"
+      },
+      "name": "Log Reporte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8640,
+        4336
+      ],
+      "id": "0d890657-3d82-4800-9905-8d8ab296f90c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { ...ctx, reply_text: 'La opcion Reportes solo esta disponible para usuarios con rol admin, soporte o coordinador.' } }];"
+      },
+      "name": "Preparar Reporte Denegado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        4496
+      ],
+      "id": "43994deb-37f9-4663-88d2-433fe08ff60e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: '4', resultado: 'REPORTE_DENEGADO' } }];"
+      },
+      "name": "Log Reporte Denegado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        4496
+      ],
+      "id": "81d15074-bec9-45a2-a077-94583dc62fca"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { ...ctx, reply_text: `Configuracion actual\\n\\nNombre: ${ctx.nombre}\\nUsuario Telegram: ${ctx.telegram_user}${ctx.telegram_username ? ` (${ctx.telegram_username})` : ''}\\nRol: ${ctx.rol}\\nActivo: ${ctx.activo}\\n\\nSugerencia: si necesitas cambiar tu rol o activacion, hazlo desde la hoja USUARIOS.` } }];"
+      },
+      "name": "Preparar Configuracion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        4656
+      ],
+      "id": "a7ff8a04-7a53-46d0-88c0-65b7a5d47f1f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: '5', resultado: 'CONFIGURACION' } }];"
+      },
+      "name": "Log Configuracion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        4816
+      ],
+      "id": "d77132d6-df2b-4999-bfcb-f1eba20af34e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { ...ctx, reply_text: `No reconoci esa opcion.\\n\\nResponde con un numero valido del menu principal:\\n0. Ayuda\\n1. Crear solicitud\\n2. Consultar estado de solicitud\\n3. Mis solicitudes\\n4. Reportes\\n5. Configuracion` } }];"
+      },
+      "name": "Preparar Opcion Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        4976
+      ],
+      "id": "55d6b0a2-8e94-43dc-abd1-01dc3feac590"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'MENU_PRINCIPAL', opcion: ctx.message_text || '', resultado: 'OPCION_INVALIDA' } }];"
+      },
+      "name": "Log Opcion Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7920,
+        5136
+      ],
+      "id": "9afc0ec3-0845-451b-8bd6-93cab4cb6671"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const map = { '1': 'Soporte tecnico', '2': 'Solicitud administrativa', '3': 'Consulta general' }; let type_route = 'INVALID'; let type_label = ''; if (ctx.message_text === '9') { type_route = 'CANCEL'; } else if (map[ctx.message_text]) { type_route = 'VALID'; type_label = map[ctx.message_text]; } return [{ json: { ...ctx, type_route, type_label } }];"
+      },
+      "name": "Interpretar Tipo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7632,
+        4640
+      ],
+      "id": "fac4f828-374d-4be4-a19c-41e2ab3df492"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"type_route\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "VALID"
+            },
+            {
+              "value2": "CANCEL",
+              "output": 1
+            },
+            {
+              "value2": "INVALID",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 2
+      },
+      "name": "Router Tipo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7728,
+        4464
+      ],
+      "id": "50b18bb6-73e9-4364-b1f5-f838f8ab4bd5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Tipo').first().json; return [{ json: { ...ctx, reply_text: `Tipo seleccionado: ${ctx.type_label}.\\n\\nAhora selecciona la prioridad:\\n1. Alta\\n2. Media\\n3. Baja\\n9. Cancelar` } }];"
+      },
+      "name": "Preparar Respuesta Prioridad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        4704
+      ],
+      "id": "4c0e25f8-9da1-4eaf-8fc1-edadad79679d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Tipo').first().json; const base = Date.now(); return [{ json: { timestamp: new Date(base).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_TIPO', opcion: ctx.message_text, resultado: ctx.type_label } }, { json: { timestamp: new Date(base + 1).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_PRIORIDAD', opcion: '', resultado: 'PENDIENTE' } }];"
+      },
+      "name": "Log Tipo Valido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        4688
+      ],
+      "id": "f23c9846-038e-4937-b632-bc34b4142620"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Tipo').first().json; return [{ json: { ...ctx, reply_text: 'Cancelaste la creacion de la solicitud.\\n\\nPuedes volver a empezar desde el menu principal cuando quieras.' } }];"
+      },
+      "name": "Preparar Cancelacion Tipo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        4848
+      ],
+      "id": "13775334-27b2-4afb-b329-18dd210837fb"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Tipo').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_TIPO', opcion: '9', resultado: 'CANCELADO' } }];"
+      },
+      "name": "Log Cancelacion Tipo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        5008
+      ],
+      "id": "8d2dc850-b408-47e2-ad26-8d83dd3d04e6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Tipo').first().json; return [{ json: { ...ctx, reply_text: 'Entrada invalida.\\n\\nSelecciona el tipo correcto:\\n1. Soporte tecnico\\n2. Solicitud administrativa\\n3. Consulta general\\n9. Cancelar' } }];"
+      },
+      "name": "Preparar Tipo Invalido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        5168
+      ],
+      "id": "3e7210c9-2f1f-496d-a457-55aa86609d60"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Tipo').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_TIPO', opcion: ctx.message_text || '', resultado: 'INVALIDO' } }];"
+      },
+      "name": "Log Tipo Invalido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        5328
+      ],
+      "id": "bfdb851b-ce79-4568-a7d4-281995f97af9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const map = { '1': 'Alta', '2': 'Media', '3': 'Baja' }; let priority_route = 'INVALID'; let priority_label = ''; if (ctx.message_text === '9') { priority_route = 'CANCEL'; } else if (map[ctx.message_text]) { priority_route = 'VALID'; priority_label = map[ctx.message_text]; } return [{ json: { ...ctx, priority_route, priority_label } }];"
+      },
+      "name": "Interpretar Prioridad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7632,
+        5472
+      ],
+      "id": "7dd37445-b48e-4a00-bb39-60dc8cb0e4b7"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"priority_route\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "VALID"
+            },
+            {
+              "value2": "CANCEL",
+              "output": 1
+            },
+            {
+              "value2": "INVALID",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 2
+      },
+      "name": "Router Prioridad",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7872,
+        5472
+      ],
+      "id": "0a9c2dfe-f12c-4a75-8b84-69e5773b4f39"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Prioridad').first().json; return [{ json: { ...ctx, reply_text: `Prioridad seleccionada: ${ctx.priority_label}.\\n\\nAhora escribe una descripcion corta pero clara del problema o solicitud.\\n\\n9. Cancelar` } }];"
+      },
+      "name": "Preparar Respuesta Descripcion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7984,
+        5296
+      ],
+      "id": "5fb90eb7-df3b-4900-88dc-52ff0f38ce42"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Prioridad').first().json; const base = Date.now(); return [{ json: { timestamp: new Date(base).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_PRIORIDAD', opcion: ctx.message_text, resultado: ctx.priority_label } }, { json: { timestamp: new Date(base + 1).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_DESCRIPCION', opcion: '', resultado: 'PENDIENTE' } }];"
+      },
+      "name": "Log Prioridad Valida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        5536
+      ],
+      "id": "3efb7a55-3907-4838-9de0-d16176b83045"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Prioridad').first().json; return [{ json: { ...ctx, reply_text: 'Cancelaste la solicitud antes de registrar la descripcion.\\n\\nPuedes volver a empezar desde el menu principal.' } }];"
+      },
+      "name": "Preparar Cancelacion Prioridad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        5696
+      ],
+      "id": "adab9bb0-141d-4408-9f09-f50f6602bb8f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Prioridad').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_PRIORIDAD', opcion: '9', resultado: 'CANCELADO' } }];"
+      },
+      "name": "Log Cancelacion Prioridad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        5856
+      ],
+      "id": "35f6685b-1478-4617-9a9e-0ce372121f93"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Prioridad').first().json; return [{ json: { ...ctx, reply_text: 'Prioridad invalida.\\n\\nResponde solo con:\\n1. Alta\\n2. Media\\n3. Baja\\n9. Cancelar' } }];"
+      },
+      "name": "Preparar Prioridad Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        6016
+      ],
+      "id": "06ae043d-de5d-4980-9d28-63a34c73c2ac"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Prioridad').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_PRIORIDAD', opcion: ctx.message_text || '', resultado: 'INVALIDO' } }];"
+      },
+      "name": "Log Prioridad Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        6176
+      ],
+      "id": "c1cba1f9-a3f8-43f4-81e3-f6cb7cbd6abb"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const description = String(ctx.message_text || '').trim(); let description_route = 'VALID'; if (description === '9') { description_route = 'CANCEL'; } else if (!description) { description_route = 'INVALID'; } const safeType = ctx.wizard_type || 'Sin tipo'; const safePriority = ctx.wizard_priority || 'Sin prioridad'; const confirmation_text = `Confirma tu solicitud:\\n\\nTipo: ${safeType}\\nPrioridad: ${safePriority}\\nDescripcion: ${description}\\n\\n1. Confirmar\\n9. Cancelar`; return [{ json: { ...ctx, current_description: description, description_route, confirmation_text } }];"
+      },
+      "name": "Interpretar Descripcion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7632,
+        6320
+      ],
+      "id": "e2a03209-88db-43e8-8666-449f6a7f51dc"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"description_route\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "VALID"
+            },
+            {
+              "value2": "CANCEL",
+              "output": 1
+            },
+            {
+              "value2": "INVALID",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 2
+      },
+      "name": "Router Descripcion",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7872,
+        6320
+      ],
+      "id": "f1ed3105-1d0d-4d0f-b9fd-99a9cdc300c9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Descripcion').first().json; return [{ json: { ...ctx, reply_text: ctx.confirmation_text } }];"
+      },
+      "name": "Preparar Confirmacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7840,
+        6128
+      ],
+      "id": "d2fbebc6-cb0a-4026-a213-74732f228ff7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Descripcion').first().json; const base = Date.now(); return [{ json: { timestamp: new Date(base).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_DESCRIPCION', opcion: 'texto', resultado: ctx.current_description } }, { json: { timestamp: new Date(base + 1).toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_CONFIRMACION', opcion: '', resultado: 'PENDIENTE' } }];"
+      },
+      "name": "Log Descripcion Valida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        6368
+      ],
+      "id": "9410d1ee-1719-4ffc-a8e8-db2224f74d7e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Descripcion').first().json; return [{ json: { ...ctx, reply_text: 'Cancelaste la creacion de la solicitud antes de confirmar.\\n\\nNo se guardo ningun ticket.' } }];"
+      },
+      "name": "Preparar Cancelacion Descripcion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        6528
+      ],
+      "id": "f4a4c5aa-347f-4965-b306-d5ff4d70bf37"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Descripcion').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_DESCRIPCION', opcion: '9', resultado: 'CANCELADO' } }];"
+      },
+      "name": "Log Cancelacion Descripcion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        6688
+      ],
+      "id": "711a2ba2-2851-4b4d-a879-fb03230c2800"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Descripcion').first().json; return [{ json: { ...ctx, reply_text: 'La descripcion es obligatoria.\\n\\nEscribe una explicacion breve del problema o solicitud.\\n\\n9. Cancelar' } }];"
+      },
+      "name": "Preparar Descripcion Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        6848
+      ],
+      "id": "5ecbd52f-4471-4179-a5ac-adfe95f05192"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Descripcion').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_DESCRIPCION', opcion: ctx.message_text || '', resultado: 'INVALIDA' } }];"
+      },
+      "name": "Log Descripcion Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8064,
+        6976
+      ],
+      "id": "b4d4b825-25e0-4233-920b-7a9e50db3cd2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; let confirm_route = 'INVALID'; if (ctx.message_text === '1') { confirm_route = 'CONFIRM'; } else if (ctx.message_text === '9') { confirm_route = 'CANCEL'; } return [{ json: { ...ctx, confirm_route } }];"
+      },
+      "name": "Interpretar Confirmacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7632,
+        7152
+      ],
+      "id": "a24018af-3399-4bd4-a340-c628147734f8"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"confirm_route\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "CONFIRM"
+            },
+            {
+              "value2": "CANCEL",
+              "output": 1
+            },
+            {
+              "value2": "INVALID",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 2
+      },
+      "name": "Router Confirmacion",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7872,
+        7152
+      ],
+      "id": "c33a6bc8-e972-460a-8b00-333de07e6d97"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Confirmacion').first().json; const now = new Date(); const pad = (value) => String(value).padStart(2, '0'); const id = `HD-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`; return [{ json: { id_ticket: id, tipo: ctx.wizard_type || 'Sin tipo', prioridad: ctx.wizard_priority || 'Sin prioridad', descripcion: ctx.wizard_description || 'Sin descripcion', estado: 'Abierto', creado_por: ctx.telegram_user, fecha_creacion: now.toISOString() } }];"
+      },
+      "name": "Preparar Ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        7120
+      ],
+      "id": "6cca3ab1-bfab-409a-a035-34cef8cd4f6c"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY",
+          "mode": "list",
+          "cachedResultName": "HelpDeskN8NBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2123922350,
+          "mode": "list",
+          "cachedResultName": "SOLICITUDES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=2123922350"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id_ticket",
+              "displayName": "id_ticket",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prioridad",
+              "displayName": "prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "creado_por",
+              "displayName": "creado_por",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_creacion",
+              "displayName": "fecha_creacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Guardar Solicitud",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        8400,
+        7120
+      ],
+      "id": "87f8d17c-4c2b-4b51-ac84-e4a15042a201",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oa7aEmmBE4za1VSa",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ticket = $('Preparar Ticket').first().json; const ctx = $('Interpretar Confirmacion').first().json; return [{ json: { ...ctx, reply_text: `Tu solicitud fue creada con exito.\\n\\nTicket: ${ticket.id_ticket}\\nTipo: ${ticket.tipo}\\nPrioridad: ${ticket.prioridad}\\nEstado inicial: ${ticket.estado}\\n\\nPuedes consultar su estado desde la opcion 2 del menu principal.`, created_ticket_id: ticket.id_ticket } }];"
+      },
+      "name": "Preparar Exito Ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8640,
+        7120
+      ],
+      "id": "98afc925-7357-4b3c-b519-1d421aecf44a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Preparar Exito Ticket').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: data.telegram_user, pantalla: 'CREAR_CONFIRMACION', opcion: '1', resultado: `TICKET_CREADO:${data.created_ticket_id}` } }];"
+      },
+      "name": "Log Ticket Creado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8880,
+        7120
+      ],
+      "id": "bbee95c8-4aee-4ecc-80e9-6d21f6499990"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Confirmacion').first().json; return [{ json: { ...ctx, reply_text: 'Cancelaste la confirmacion.\\n\\nNo se guardo ningun ticket y regresaste al menu principal.' } }];"
+      },
+      "name": "Preparar Cancelacion Confirmacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        7280
+      ],
+      "id": "a72f988c-fecf-4f3c-baf6-5842eec484a8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Confirmacion').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_CONFIRMACION', opcion: '9', resultado: 'CANCELADO' } }];"
+      },
+      "name": "Log Cancelacion Confirmacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        7440
+      ],
+      "id": "a4e82427-742f-4a16-8250-47bc85911e62"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Confirmacion').first().json; return [{ json: { ...ctx, reply_text: `Respuesta invalida.\\n\\nConfirma tu solicitud:\\nTipo: ${ctx.wizard_type || 'Sin tipo'}\\nPrioridad: ${ctx.wizard_priority || 'Sin prioridad'}\\nDescripcion: ${ctx.wizard_description || 'Sin descripcion'}\\n\\n1. Confirmar\\n9. Cancelar` } }];"
+      },
+      "name": "Preparar Confirmacion Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        7600
+      ],
+      "id": "3747c51e-4a9f-4cd9-9d46-80d551194f43"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Confirmacion').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CREAR_CONFIRMACION', opcion: ctx.message_text || '', resultado: 'INVALIDO' } }];"
+      },
+      "name": "Log Confirmacion Invalida",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        7760
+      ],
+      "id": "47cefee1-d8a4-4aac-b4b8-eb46f4258a6b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Resolver Estado').first().json; const ticket_query = String(ctx.message_text || '').trim().toUpperCase(); const consult_route = ticket_query === '9' ? 'CANCEL' : 'SEARCH'; return [{ json: { ...ctx, consult_route, ticket_query } }];"
+      },
+      "name": "Interpretar Consulta Ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7632,
+        7936
+      ],
+      "id": "f7a842dc-4ed8-4681-970e-2c54a979cef3"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"consult_route\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "SEARCH"
+            },
+            {
+              "value2": "CANCEL",
+              "output": 1
+            }
+          ]
+        },
+        "fallbackOutput": 1
+      },
+      "name": "Router Consulta Ticket",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        7872,
+        7936
+      ],
+      "id": "12ae53fc-8d65-495f-8e7c-f1fa759d8633"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY",
+          "mode": "list",
+          "cachedResultName": "HelpDeskN8NBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2123922350,
+          "mode": "list",
+          "cachedResultName": "SOLICITUDES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=2123922350"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id_ticket",
+              "lookupValue": "={{$json.ticket_query}}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "name": "Buscar Ticket por ID",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        8160,
+        7888
+      ],
+      "settings": {
+        "alwaysOutputData": true
+      },
+      "id": "6bae9827-ed75-4afd-a7c7-f2e6b6c6aceb",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oa7aEmmBE4za1VSa",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Consulta Ticket').first().json; const row = $input.all().map(item => item.json).find(item => item && String(item.id_ticket || '').trim() !== ''); let reply_text = ''; let consult_result = ''; if (row) { reply_text = `Estado del ticket ${row.id_ticket}\\n\\nTipo: ${row.tipo || 'Sin tipo'}\\nPrioridad: ${row.prioridad || 'Sin prioridad'}\\nEstado: ${row.estado || 'Sin estado'}\\nCreado por: ${row.creado_por || 'Sin usuario'}\\nFecha: ${row.fecha_creacion || 'Sin fecha'}`; consult_result = `ENCONTRADO:${row.estado || 'SIN_ESTADO'}`; } else { reply_text = `No encontre un ticket con el ID ${ctx.ticket_query}.\\n\\nVerifica el formato y vuelve a intentarlo desde la opcion 2.`; consult_result = 'NO_ENCONTRADO'; } return [{ json: { ...ctx, reply_text, consult_result } }];"
+      },
+      "name": "Formatear Ticket Consultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8400,
+        7856
+      ],
+      "id": "5aa43c48-764f-4732-b8bd-cf02f67139be"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Formatear Ticket Consultado').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: data.telegram_user, pantalla: 'CONSULTAR_TICKET', opcion: data.ticket_query, resultado: data.consult_result } }];"
+      },
+      "name": "Log Consulta Ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8640,
+        7856
+      ],
+      "id": "744eaf40-9491-4565-aacd-384485e29390"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Consulta Ticket').first().json; return [{ json: { ...ctx, reply_text: 'Cancelaste la consulta del ticket y volviste al menu principal.' } }];"
+      },
+      "name": "Preparar Cancelacion Consulta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        8016
+      ],
+      "id": "bfe307ca-010f-49d9-9053-1787855add49"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Interpretar Consulta Ticket').first().json; return [{ json: { timestamp: new Date().toISOString(), telegram_user: ctx.telegram_user, pantalla: 'CONSULTAR_TICKET', opcion: '9', resultado: 'CANCELADO' } }];"
+      },
+      "name": "Log Cancelacion Consulta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        8176
+      ],
+      "id": "a1178c02-99c2-4fce-aff9-d85c0966c7a8"
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.chat_id}}",
+        "text": "={{$json.reply_text}}",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "0",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "1",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "2",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "3",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "4",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "5",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {},
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Responder con Menu",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        9760,
+        5648
+      ],
+      "id": "15f6dc7a-88c5-4d34-a48a-06fbdd28ffad",
+      "webhookId": "eed7132c-6cda-4f7f-9a70-da7c73b66fec",
+      "credentials": {
+        "telegramApi": {
+          "id": "XMlcxQ0bxqfb7urt",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.chat_id}}",
+        "text": "={{$json.reply_text}}",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "1",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "2",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "3",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "9",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {},
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Responder Tipo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        9760,
+        5808
+      ],
+      "id": "eead39eb-ecbd-4e2e-a468-18904a217e40",
+      "webhookId": "7dcbe6b2-186e-4f59-bd73-87bf73dd406b",
+      "credentials": {
+        "telegramApi": {
+          "id": "XMlcxQ0bxqfb7urt",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.chat_id}}",
+        "text": "={{$json.reply_text}}",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "1",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "2",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "3",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "9",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {},
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Responder Prioridad",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        9760,
+        5968
+      ],
+      "id": "2feee8af-bca0-4bb8-b4f7-6582c7996f32",
+      "webhookId": "19c8bb96-c7d2-4457-a413-9788623feb4a",
+      "credentials": {
+        "telegramApi": {
+          "id": "XMlcxQ0bxqfb7urt",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.chat_id}}",
+        "text": "={{$json.reply_text}}",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "9",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {},
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Responder Descripcion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        9760,
+        6128
+      ],
+      "id": "45ac017d-ddcf-4246-afdf-ce6ac518aa19",
+      "webhookId": "9c72ea21-b994-469d-9a2a-9d4e8d9c5986",
+      "credentials": {
+        "telegramApi": {
+          "id": "XMlcxQ0bxqfb7urt",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.chat_id}}",
+        "text": "={{$json.reply_text}}",
+        "replyMarkup": "replyKeyboard",
+        "replyKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "1",
+                    "additionalFields": {}
+                  },
+                  {
+                    "text": "9",
+                    "additionalFields": {}
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "replyKeyboardOptions": {},
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Responder Confirmacion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        9760,
+        6288
+      ],
+      "id": "a3e7fb1b-0fd4-4503-bd52-0d9914db4508",
+      "webhookId": "ac09ce1e-d510-49a7-9ff6-e6430a4a17fa",
+      "credentials": {
+        "telegramApi": {
+          "id": "XMlcxQ0bxqfb7urt",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{$json.chat_id}}",
+        "text": "={{$json.reply_text}}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Responder Texto",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        9760,
+        6448
+      ],
+      "id": "1a8a219d-c6c3-4cb0-9198-3932e6a05264",
+      "webhookId": "c1377a58-0d19-4606-a1f7-d5f26adca400",
+      "credentials": {
+        "telegramApi": {
+          "id": "XMlcxQ0bxqfb7urt",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY",
+          "mode": "list",
+          "cachedResultName": "HelpDeskN8NBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 760625551,
+          "mode": "list",
+          "cachedResultName": "LOGS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=760625551"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "timestamp": "={{$json.timestamp}}",
+            "telegram_user": "={{$json.telegram_user}}",
+            "pantalla": "={{$json.pantalla}}",
+            "opcion": "={{$json.opcion}}",
+            "resultado": "={{$json.resultado}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telegram_user",
+              "displayName": "telegram_user",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pantalla",
+              "displayName": "pantalla",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "opcion",
+              "displayName": "opcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resultado",
+              "displayName": "resultado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Guardar LOGS",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        9760,
+        6608
+      ],
+      "id": "38630189-9294-4313-a79c-7d47b72109ad",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oa7aEmmBE4za1VSa",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Entrada": {
+      "main": [
+        [
+          {
+            "node": "Buscar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Validar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Router Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Usuario": {
+      "main": [
+        [
+          {
+            "node": "Leer Logs Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Acceso Denegado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Acceso Denegado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Acceso Denegado": {
+      "main": [
+        [
+          {
+            "node": "Responder Texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Acceso Denegado": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Logs Usuario": {
+      "main": [
+        [
+          {
+            "node": "Resolver Estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Estado": {
+      "main": [
+        [
+          {
+            "node": "Router de Estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router de Estado": {
+      "main": [
+        [
+          {
+            "node": "Preparar Menu Principal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Menu Principal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Router Opcion Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Menu Principal": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Menu Principal": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Opcion Menu": {
+      "main": [
+        [
+          {
+            "node": "Preparar Ayuda",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Ayuda",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Inicio Crear",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Inicio Crear",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Consulta Ticket",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Consulta Pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Mis Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Ayuda": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Ayuda": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Inicio Crear": {
+      "main": [
+        [
+          {
+            "node": "Responder Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Inicio Crear": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Consulta Ticket": {
+      "main": [
+        [
+          {
+            "node": "Responder Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Consulta Pendiente": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Mis Solicitudes": {
+      "main": [
+        [
+          {
+            "node": "Formatear Mis Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Mis Solicitudes": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Mis Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Mis Solicitudes": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Reportes Permitidos": {
+      "main": [
+        [
+          {
+            "node": "Leer Solicitudes Reporte",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Reporte Denegado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Reporte Denegado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Solicitudes Reporte": {
+      "main": [
+        [
+          {
+            "node": "Construir Reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir Reporte": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Reporte": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Reporte Denegado": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Reporte Denegado": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Configuracion": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Opcion Invalida": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Opcion Invalida": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar Tipo": {
+      "main": [
+        [
+          {
+            "node": "Router Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Tipo": {
+      "main": [
+        [
+          {
+            "node": "Preparar Respuesta Prioridad",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Tipo Valido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Cancelacion Tipo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Cancelacion Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Tipo Invalido",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Tipo Invalido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Respuesta Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Responder Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Tipo Valido": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Cancelacion Tipo": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Cancelacion Tipo": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Tipo Invalido": {
+      "main": [
+        [
+          {
+            "node": "Responder Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Tipo Invalido": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Router Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Preparar Respuesta Descripcion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Prioridad Valida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Cancelacion Prioridad",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Cancelacion Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Prioridad Invalida",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Prioridad Invalida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Respuesta Descripcion": {
+      "main": [
+        [
+          {
+            "node": "Responder Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Prioridad Valida": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Cancelacion Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Cancelacion Prioridad": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Prioridad Invalida": {
+      "main": [
+        [
+          {
+            "node": "Responder Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Prioridad Invalida": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar Descripcion": {
+      "main": [
+        [
+          {
+            "node": "Router Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Descripcion": {
+      "main": [
+        [
+          {
+            "node": "Preparar Confirmacion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Descripcion Valida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Cancelacion Descripcion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Cancelacion Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Descripcion Invalida",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Descripcion Invalida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Responder Confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Descripcion Valida": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Cancelacion Descripcion": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Cancelacion Descripcion": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Descripcion Invalida": {
+      "main": [
+        [
+          {
+            "node": "Responder Descripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Descripcion Invalida": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar Confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Router Confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Preparar Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Cancelacion Confirmacion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Cancelacion Confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Confirmacion Invalida",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Confirmacion Invalida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Ticket": {
+      "main": [
+        [
+          {
+            "node": "Guardar Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Solicitud": {
+      "main": [
+        [
+          {
+            "node": "Preparar Exito Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Exito Ticket": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Ticket Creado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Ticket Creado": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Cancelacion Confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Cancelacion Confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Confirmacion Invalida": {
+      "main": [
+        [
+          {
+            "node": "Responder Confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Confirmacion Invalida": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar Consulta Ticket": {
+      "main": [
+        [
+          {
+            "node": "Router Consulta Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Consulta Ticket": {
+      "main": [
+        [
+          {
+            "node": "Buscar Ticket por ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Cancelacion Consulta",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Cancelacion Consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Ticket por ID": {
+      "main": [
+        [
+          {
+            "node": "Formatear Ticket Consultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Ticket Consultado": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Consulta Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Consulta Ticket": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Cancelacion Consulta": {
+      "main": [
+        [
+          {
+            "node": "Responder con Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Cancelacion Consulta": {
+      "main": [
+        [
+          {
+            "node": "Guardar LOGS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a8885147-7740-43e4-857f-7b76005f838f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9e38adf98b44403dffe2b725bc7b8e9acb8a50970d4eb4e89464405527e279d5"
+  },
+  "id": "Htwxbo2bkrO6PmiG",
+  "tags": []
+}
