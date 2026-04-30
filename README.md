@@ -94,6 +94,13 @@ flowchart LR
 | `opcion` | Valor ingresado por el usuario |
 | `resultado` | Resultado del flujo o validacion |
 
+# modelo N8N
+
+### Evidencia
+
+![Flujo N8N](./Evidencia/flujo.png)
+
+
 ## Validaciones obligatorias
 
 - Verificar que el usuario exista y este activo.
@@ -140,6 +147,10 @@ La guia detallada esta en [docs/entrega.md](/home/zeven/Documentos/HelpDeskBot_N
 
 ## Puesta en marcha
 
+![Flujo N8N Telegram](Evidencia/helpdesk2.png)
+
+
+
 1. Crear el bot en Telegram y obtener el token.
 2. Crear el documento `HelpDeskBot_DB` en Google Sheets con las hojas requeridas.
 3. Copiar `.env.example` a `.env` y ajustar variables.
@@ -147,5 +158,7 @@ La guia detallada esta en [docs/entrega.md](/home/zeven/Documentos/HelpDeskBot_N
 5. Configurar credenciales en `n8n`.
 6. Importar el workflow exportado.
 7. Ejecutar pruebas desde Telegram.
+
+
 
 La instalacion paso a paso esta en [docs/instalacion.md](/home/zeven/Documentos/HelpDeskBot_N8N/docs/instalacion.md), el detalle del flujo esta en [docs/flujo-n8n.md](/home/zeven/Documentos/HelpDeskBot_N8N/docs/flujo-n8n.md) y el avance observado del workflow esta en [docs/avance-actual.md](/home/zeven/Documentos/HelpDeskBot_N8N/docs/avance-actual.md).

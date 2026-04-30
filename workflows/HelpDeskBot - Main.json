@@ -12,10 +12,10 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        5408,
-        3056
+        0,
+        0
       ],
-      "id": "8ee849a3-9a88-4768-93ac-fbbb826c675b"
+      "id": "e13e81b9-e31c-4f4c-bee5-a5312f447b6d"
     },
     {
       "parameters": {
@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        6496,
-        3056
+        1088,
+        0
       ],
-      "id": "4f2a836c-bbda-416b-be0a-3401167a6291"
+      "id": "0f14f49e-7e5a-43b2-9ea2-ea4fe4c95569"
     },
     {
       "parameters": {
@@ -44,10 +44,10 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        7392,
-        3056
+        1984,
+        0
       ],
-      "id": "74087598-bdda-4627-8ae0-b8bf0af64466"
+      "id": "9d7b631f-d40c-4584-b0c8-0c77137009ab"
     },
     {
       "parameters": {
@@ -60,10 +60,10 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        7392,
-        4496
+        1984,
+        1440
       ],
-      "id": "81de6356-6ae6-434f-acfd-9a7cb3417926"
+      "id": "00c64177-cc45-4870-ae60-96f65a3d3e8c"
     },
     {
       "parameters": {
@@ -76,10 +76,10 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        9440,
-        5488
+        4032,
+        2432
       ],
-      "id": "eb1deaab-dd62-4c19-9de6-66038d1b24c6"
+      "id": "d0bddcd0-3810-4dfa-8108-b7de7ed4c56d"
     },
     {
       "parameters": {
@@ -92,14 +92,14 @@
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.2,
       "position": [
-        5568,
-        3296
+        160,
+        240
       ],
-      "id": "fa76df67-fc59-4ebd-86f9-727f372a9288",
+      "id": "43614981-ea1c-4cae-afa3-a592acfccf71",
       "webhookId": "3e41ba15-78bc-409c-8180-3d19fc8856b6",
       "credentials": {
         "telegramApi": {
-          "id": "XMlcxQ0bxqfb7urt",
+          "id": "pTwJQsdfESsk0IAl",
           "name": "Telegram account"
         }
       }
@@ -112,17 +112,19 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5808,
-        3296
+        400,
+        240
       ],
-      "id": "4dc4e072-397a-4c4f-867b-947c47b1587d"
+      "id": "b87e2678-1af6-48cf-8f72-f7e02c9fb7f7"
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?gid=0#gid=0",
-          "mode": "url"
+          "value": "1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY",
+          "mode": "list",
+          "cachedResultName": "HelpDeskN8NBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
@@ -134,45 +136,45 @@
         "filtersUI": {
           "values": [
             {
-              "lookupColumn": "telegram_user",
-              "lookupValue": "={{$json.telegram_user}}"
+              "lookupColumn": "telegram_user ",
+              "lookupValue": "={{ $json.telegram_user.toString() }}"
             }
           ]
         },
-        "options": {
-          "returnFirstMatch": true
-        }
+        "options": {}
       },
       "name": "Buscar Usuario",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        6048,
-        3296
+        640,
+        240
       ],
       "settings": {
         "alwaysOutputData": true
       },
-      "id": "73425bd6-b20b-4a60-abf4-b130e691b695",
+      "id": "acbfe79d-c10c-4d63-8e91-9e15e4289bbe",
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "oa7aEmmBE4za1VSa",
+          "id": "4UEkMo0JeO2PFx1V",
           "name": "Google Sheets account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Normalizar Entrada').first().json;\nconst user = $('Buscar Usuario').first().json || {};\n\nconst exists = !!user.row_number;\nconst activoDb = String(user.activo ?? '').trim().toUpperCase();\nconst active = ['SI', 'TRUE', '1', 'ACTIVO'].includes(activoDb);\n\nreturn [\n  {\n    json: {\n      ...base,\n      nombre: user.nombre || base.first_name,\n      rol: String(user.rol || 'usuario').toUpperCase(),\n      activo: activoDb || 'NO',\n      user_exists: exists,\n      user_active: exists && active,\n      user_route: exists && active ? 'ACTIVE' : 'BLOCKED',\n      debug_row_number: user.row_number ?? null,\n      debug_activo_db: activoDb,\n    }\n  }\n];\n"
+        "jsCode": "const base = $('Normalizar Entrada').first().json;\nconst user = $('Buscar Usuario').first().json || {};\n\n// Verificamos si existe (ahora que buscar usuario funciona, esto será true)\nconst exists = !!(user.row_number || user.telegram_user);\n\n// Limpiamos el valor de 'activo' (detecta \"si\")\nconst activoDb = String(user.activo || '').trim().toLowerCase();\nconst active = ['si', 'true', '1', 'activo'].includes(activoDb);\n\nreturn [{\n  json: {\n    ...base,\n    nombre: user.nombre || base.first_name,\n    rol: String(user.rol || 'USUARIO').toUpperCase(),\n    activo: activoDb,\n    user_exists: exists,\n    user_active: exists && active,\n    user_route: (exists && active) ? 'ACTIVE' : 'BLOCKED',\n  }\n}];"
       },
       "name": "Validar Usuario",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6288,
-        3296
+        880,
+        240
       ],
-      "id": "d76f5dcd-e3d1-4f0b-a0fe-b9a290ca36f1"
+      "id": "0e940ae9-54e1-4ac0-847a-e8c2b940d9b4",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -195,10 +197,11 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        6528,
-        3296
+        1120,
+        240
       ],
-      "id": "47dee596-9088-4f9e-ba84-eead802e53b9"
+      "id": "11c7b2c4-8087-483b-9ed5-9dc1275b6b2a",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -208,10 +211,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6800,
-        3440
+        1392,
+        384
       ],
-      "id": "5b146a24-5d5c-4173-b342-3e0bb7071a0a"
+      "id": "0cb608be-b7d3-4061-9d0f-c904d5e3240e"
     },
     {
       "parameters": {
@@ -221,32 +224,26 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6800,
-        3600
+        1392,
+        544
       ],
-      "id": "5eed0368-48d2-4b52-a4d3-8b831586da6d"
+      "id": "ae79873b-9858-4226-b44c-5f165bfe3758"
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?gid=0#gid=0",
-          "mode": "url"
+          "value": "1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY",
+          "mode": "list",
+          "cachedResultName": "HelpDeskN8NBot_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
-          "value": 760625551,
+          "value": 642152754,
           "mode": "list",
-          "cachedResultName": "LOGS",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=760625551"
-        },
-        "filtersUI": {
-          "values": [
-            {
-              "lookupColumn": "telegram_user",
-              "lookupValue": "={{$json.telegram_user}}"
-            }
-          ]
+          "cachedResultName": "USUARIOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B0fIbK2FRowuUXbLlavj2KM3hL8GF9ZosetEnNoLLlY/edit#gid=642152754"
         },
         "options": {}
       },
@@ -254,79 +251,34 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        6800,
-        3200
+        1392,
+        144
       ],
       "settings": {
         "alwaysOutputData": true
       },
-      "id": "953b6a67-6b84-4613-85e0-14f105400da9",
+      "id": "485500fe-67a5-4519-a8f7-9e646189842f",
       "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "oa7aEmmBE4za1VSa",
+          "id": "4UEkMo0JeO2PFx1V",
           "name": "Google Sheets account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Validar Usuario').first().json; const logs = $input.all().map(item => item.json).filter(log => log && Object.keys(log).length > 0 && log.timestamp).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); const text = String(ctx.message_text || '').trim(); const normalized = String(ctx.normalized_text || '').trim(); const forceMenuValues = ['/START', '/MENU', 'MENU', 'INICIO']; let route_state = 'SHOW_MENU'; if (!text || forceMenuValues.includes(normalized)) { route_state = 'SHOW_MENU'; } else { const pending = [...logs].reverse().find(log => ['CREAR_TIPO', 'CREAR_PRIORIDAD', 'CREAR_DESCRIPCION', 'CREAR_CONFIRMACION', 'CONSULTAR_TICKET'].includes(String(log.pantalla || '')) && String(log.resultado || '').toUpperCase() === 'PENDIENTE'); if (pending) { route_state = String(pending.pantalla); } else if (logs.length === 0) { route_state = 'SHOW_MENU'; } else { route_state = 'MENU_PRINCIPAL'; } } const wizardStart = [...logs].reverse().find(log => String(log.pantalla || '') === 'CREAR_TIPO' && String(log.resultado || '').toUpperCase() === 'PENDIENTE')?.timestamp; const wizardLogs = wizardStart ? logs.filter(log => new Date(log.timestamp) >= new Date(wizardStart)) : []; const lastType = [...wizardLogs].reverse().find(log => String(log.pantalla || '') === 'CREAR_TIPO' && !['PENDIENTE', 'INVALIDO', 'CANCELADO'].includes(String(log.resultado || '').toUpperCase())); const lastPriority = [...wizardLogs].reverse().find(log => String(log.pantalla || '') === 'CREAR_PRIORIDAD' && !['PENDIENTE', 'INVALIDO', 'CANCELADO'].includes(String(log.resultado || '').toUpperCase())); const lastDescription = [...wizardLogs].reverse().find(log => String(log.pantalla || '') === 'CREAR_DESCRIPCION' && !['PENDIENTE', 'INVALIDA', 'INVALIDO', 'CANCELADO'].includes(String(log.resultado || '').toUpperCase())); const canReport = ['ADMIN', 'SOPORTE', 'COORDINADOR'].includes(String(ctx.rol || '').trim().toUpperCase()); return [{ json: { ...ctx, route_state, menu_option: text, wizard_type: lastType?.resultado || '', wizard_priority: lastPriority?.resultado || '', wizard_description: lastDescription?.resultado || '', can_report: canReport ? 'ALLOW' : 'DENY' } }];"
+        "jsCode": "const ctx = $('Validar Usuario').first().json;\nconst logs = $input.all().map(item => item.json).filter(log => log.timestamp);\n\n// Ordenar logs por fecha descendente (el más nuevo primero)\nconst sortedLogs = logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));\n\nconst text = String(ctx.message_text || '').trim();\nconst normalized = text.toUpperCase();\nconst forceMenuValues = ['/START', '/MENU', 'MENU', 'INICIO'];\n\nlet route_state = 'SHOW_MENU';\n\nif (!text || forceMenuValues.includes(normalized)) {\n  route_state = 'SHOW_MENU';\n} else {\n  // Buscar si hay un proceso pendiente\n  const pending = sortedLogs.find(log => \n    ['CREAR_TIPO', 'CREAR_PRIORIDAD', 'CREAR_DESCRIPCION', 'CREAR_CONFIRMACION', 'CONSULTAR_TICKET'].includes(log.pantalla) && \n    String(log.resultado).toUpperCase() === 'PENDIENTE'\n  );\n\n  if (pending) {\n    route_state = pending.pantalla;\n  } else {\n    route_state = 'MENU_PRINCIPAL';\n  }\n}\n\n// Recuperar datos del Wizard para cuando el usuario está en pasos intermedios\nconst lastType = sortedLogs.find(l => l.pantalla === 'CREAR_TIPO' && !['PENDIENTE', 'INVALIDO', 'CANCELADO'].includes(String(l.resultado).toUpperCase()));\nconst lastPriority = sortedLogs.find(l => l.pantalla === 'CREAR_PRIORIDAD' && !['PENDIENTE', 'INVALIDO', 'CANCELADO'].includes(String(l.resultado).toUpperCase()));\nconst lastDescription = sortedLogs.find(l => l.pantalla === 'CREAR_DESCRIPCION' && !['PENDIENTE', 'INVALIDO', 'CANCELADO'].includes(String(l.resultado).toUpperCase()));\n\nreturn [{\n  json: {\n    ...ctx,\n    route_state,\n    menu_option: text,\n    wizard_type: lastType?.resultado || '',\n    wizard_priority: lastPriority?.resultado || '',\n    wizard_description: lastDescription?.resultado || '',\n    can_report: ['ADMIN', 'SOPORTE'].includes(ctx.rol) ? 'ALLOW' : 'DENY'\n  }\n}];"
       },
       "name": "Resolver Estado",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7056,
-        3200
+        1648,
+        144
       ],
-      "id": "f1b127b7-e110-44e4-86a8-e30bd1fa62fb"
-    },
-    {
-      "parameters": {
-        "dataType": "string",
-        "value1": "={{$json[\"route_state\"]}}",
-        "rules": {
-          "rules": [
-            {
-              "value2": "SHOW_MENU"
-            },
-            {
-              "value2": "MENU_PRINCIPAL",
-              "output": 1
-            },
-            {
-              "value2": "CREAR_TIPO",
-              "output": 2
-            },
-            {
-              "value2": "CREAR_PRIORIDAD",
-              "output": 3
-            },
-            {
-              "value2": "CREAR_DESCRIPCION",
-              "output": 3
-            },
-            {
-              "value2": "CREAR_CONFIRMACION",
-              "output": 3
-            },
-            {
-              "value2": "CONSULTAR_TICKET",
-              "output": 3
-            }
-          ]
-        },
-        "fallbackOutput": 0
-      },
-      "name": "Router de Estado",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 1,
-      "position": [
-        7296,
-        3200
-      ],
-      "id": "9ed6b6bb-4e9a-41a9-be2f-47465b403578"
+      "id": "62f61ee8-def7-426c-a695-705d8c59fffc",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -336,10 +288,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7600,
-        3072
+        2192,
+        16
       ],
-      "id": "692c004e-c803-444b-aa56-b89b137fbd07"
+      "id": "590ff74d-e1d9-46c7-8127-1b1090c1e98d"
     },
     {
       "parameters": {
@@ -349,52 +301,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7600,
-        3248
+        2192,
+        192
       ],
-      "id": "4776b557-22da-4bed-ab38-11adda4c8c18"
-    },
-    {
-      "parameters": {
-        "dataType": "string",
-        "value1": "={{$json[\"menu_option\"]}}",
-        "rules": {
-          "rules": [
-            {
-              "value2": "0"
-            },
-            {
-              "value2": "1",
-              "output": 1
-            },
-            {
-              "value2": "2",
-              "output": 2
-            },
-            {
-              "value2": "3",
-              "output": 3
-            },
-            {
-              "value2": "4",
-              "output": 3
-            },
-            {
-              "value2": "5",
-              "output": 3
-            }
-          ]
-        },
-        "fallbackOutput": 6
-      },
-      "name": "Router Opcion Menu",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 1,
-      "position": [
-        7600,
-        3488
-      ],
-      "id": "417fe079-3e70-4a3c-af60-9dfb42bbb1e4"
+      "id": "4077de9e-3402-44d4-ba4c-d5f4d8fd001c"
     },
     {
       "parameters": {
@@ -404,10 +314,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        3168
+        2512,
+        112
       ],
-      "id": "bb2993d3-df1d-42cb-be9d-30af51c8ae14"
+      "id": "23687547-02fd-46b6-aedc-a2766eb1d9cc"
     },
     {
       "parameters": {
@@ -417,10 +327,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        3328
+        2512,
+        272
       ],
-      "id": "453aebf2-6941-4c4e-a9b2-b8df40070595"
+      "id": "b9182754-321f-4031-84ce-2f2ebd47c295"
     },
     {
       "parameters": {
@@ -430,10 +340,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        3488
+        2512,
+        432
       ],
-      "id": "c841966c-667f-4f14-9424-5a5b06a76a09"
+      "id": "2ae03b93-0103-4d9e-89ec-d60694b9eda4"
     },
     {
       "parameters": {
@@ -443,10 +353,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        3648
+        2512,
+        592
       ],
-      "id": "4385e5ad-dc3a-4eb8-82b7-77eeba6ee8bb"
+      "id": "1962cb05-fdce-4b5f-b821-2d660f9fc6e2"
     },
     {
       "parameters": {
@@ -456,10 +366,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        3808
+        2512,
+        752
       ],
-      "id": "89d4d95b-0470-4933-b6dd-6c6f73d04d6f"
+      "id": "22799655-f89e-4ef5-830f-259b284beb4b"
     },
     {
       "parameters": {
@@ -469,10 +379,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        3968
+        2512,
+        912
       ],
-      "id": "8ef2011a-ef0c-46ca-ba45-8458404f4d0d"
+      "id": "d5513748-17b5-4b7f-9229-7f8b0b365137"
     },
     {
       "parameters": {
@@ -491,8 +401,26 @@
         "filtersUI": {
           "values": [
             {
-              "lookupColumn": "creado_por",
+              "lookupColumn": "creado_por ",
               "lookupValue": "={{$json.telegram_user}}"
+            },
+            {
+              "lookupColumn": "id_ticket"
+            },
+            {
+              "lookupColumn": " tipo "
+            },
+            {
+              "lookupColumn": "prioridad"
+            },
+            {
+              "lookupColumn": "descripcion"
+            },
+            {
+              "lookupColumn": "estado "
+            },
+            {
+              "lookupColumn": "fecha_creacion"
             }
           ]
         },
@@ -502,16 +430,18 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        7920,
-        4128
+        2512,
+        1072
       ],
       "settings": {
         "alwaysOutputData": true
       },
-      "id": "1b7e59f5-0263-4c15-98e7-0f869d8173e2",
+      "id": "0122d1f4-ee3f-4e5f-86b7-fab53d74e5aa",
+      "executeOnce": false,
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "oa7aEmmBE4za1VSa",
+          "id": "4UEkMo0JeO2PFx1V",
           "name": "Google Sheets account"
         }
       }
@@ -524,10 +454,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        4128
+        2752,
+        1072
       ],
-      "id": "b8aed704-7c15-4440-975d-cf93fb7b2599"
+      "id": "c6bf37ef-e2d9-4c2e-b4d3-d4bc11996169"
     },
     {
       "parameters": {
@@ -537,10 +467,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8400,
-        4128
+        2992,
+        1072
       ],
-      "id": "6b241e95-0fef-4d48-96e6-f022acdcf5fc"
+      "id": "068ac9b8-509c-4540-a620-534786b2a846"
     },
     {
       "parameters": {
@@ -563,10 +493,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        7920,
-        4416
+        2512,
+        1360
       ],
-      "id": "49552a9b-2920-44ef-9104-b75ec26feba7"
+      "id": "d23c98e2-90a3-4535-b573-0c66b1483d71"
     },
     {
       "parameters": {
@@ -590,16 +520,16 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        8160,
-        4336
+        2752,
+        1280
       ],
       "settings": {
         "alwaysOutputData": true
       },
-      "id": "60fa0b56-61bc-47b3-9f70-b3a9889b6381",
+      "id": "44a2d64c-1411-4447-9c72-c22d8ba4f5b5",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "oa7aEmmBE4za1VSa",
+          "id": "4UEkMo0JeO2PFx1V",
           "name": "Google Sheets account"
         }
       }
@@ -612,10 +542,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8400,
-        4336
+        2992,
+        1280
       ],
-      "id": "2871135a-3f92-4c12-b237-a9a6992de30b"
+      "id": "27c01e0d-6796-49ed-9ce8-ef742e432640"
     },
     {
       "parameters": {
@@ -625,10 +555,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8640,
-        4336
+        3232,
+        1280
       ],
-      "id": "0d890657-3d82-4800-9905-8d8ab296f90c"
+      "id": "81487bb8-f02c-45a7-bcc4-5db01a058dd3"
     },
     {
       "parameters": {
@@ -638,10 +568,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        4496
+        2752,
+        1440
       ],
-      "id": "43994deb-37f9-4663-88d2-433fe08ff60e"
+      "id": "4a382bd7-4795-4520-bb09-5510bd233dce"
     },
     {
       "parameters": {
@@ -651,10 +581,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8400,
-        4496
+        2992,
+        1440
       ],
-      "id": "81d15074-bec9-45a2-a077-94583dc62fca"
+      "id": "91314086-84d6-41d9-a539-a1f1cbb06b7e"
     },
     {
       "parameters": {
@@ -664,10 +594,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        4656
+        2512,
+        1600
       ],
-      "id": "a7ff8a04-7a53-46d0-88c0-65b7a5d47f1f"
+      "id": "f8c4075c-cb07-45eb-88ef-178ea132731b"
     },
     {
       "parameters": {
@@ -677,10 +607,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        4816
+        2512,
+        1760
       ],
-      "id": "d77132d6-df2b-4999-bfcb-f1eba20af34e"
+      "id": "8b7983c1-4ef0-41a9-872d-2ad6d2d9fb3a"
     },
     {
       "parameters": {
@@ -690,10 +620,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        4976
+        2512,
+        1920
       ],
-      "id": "55d6b0a2-8e94-43dc-abd1-01dc3feac590"
+      "id": "0324e1f2-6c75-428e-a76d-997ec90d79ea"
     },
     {
       "parameters": {
@@ -703,10 +633,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7920,
-        5136
+        2512,
+        2080
       ],
-      "id": "9afc0ec3-0845-451b-8bd6-93cab4cb6671"
+      "id": "d43bd37d-3890-40e0-9051-ec1f167540bd"
     },
     {
       "parameters": {
@@ -716,10 +646,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7632,
-        4640
+        2224,
+        1584
       ],
-      "id": "fac4f828-374d-4be4-a19c-41e2ab3df492"
+      "id": "b1f8fb5a-f009-4357-9fd6-328a4345cbc6"
     },
     {
       "parameters": {
@@ -746,10 +676,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        7728,
-        4464
+        2320,
+        1408
       ],
-      "id": "50b18bb6-73e9-4364-b1f5-f838f8ab4bd5"
+      "id": "f91aa40e-937d-42fb-9361-219e6c80b835"
     },
     {
       "parameters": {
@@ -759,10 +689,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8400,
-        4704
+        2992,
+        1648
       ],
-      "id": "4c0e25f8-9da1-4eaf-8fc1-edadad79679d"
+      "id": "aaaa8338-f6e5-4028-866f-73d5545ac20f"
     },
     {
       "parameters": {
@@ -772,10 +702,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        4688
+        2752,
+        1632
       ],
-      "id": "f23c9846-038e-4937-b632-bc34b4142620"
+      "id": "eb368359-c913-403a-8354-7b784798d4e1"
     },
     {
       "parameters": {
@@ -785,10 +715,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        4848
+        2752,
+        1792
       ],
-      "id": "13775334-27b2-4afb-b329-18dd210837fb"
+      "id": "96b67a82-5ccb-4b0c-b676-5b725a776da0"
     },
     {
       "parameters": {
@@ -798,10 +728,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        5008
+        2752,
+        1952
       ],
-      "id": "8d2dc850-b408-47e2-ad26-8d83dd3d04e6"
+      "id": "40276beb-90e5-471a-b7ba-8372eadff909"
     },
     {
       "parameters": {
@@ -811,10 +741,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        5168
+        2752,
+        2112
       ],
-      "id": "3e7210c9-2f1f-496d-a457-55aa86609d60"
+      "id": "522ea616-e251-43c1-8885-090b7f85f4f0"
     },
     {
       "parameters": {
@@ -824,10 +754,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        5328
+        2752,
+        2272
       ],
-      "id": "bfdb851b-ce79-4568-a7d4-281995f97af9"
+      "id": "47556747-b733-4d7f-9888-29001a99c41b"
     },
     {
       "parameters": {
@@ -837,10 +767,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7632,
-        5472
+        2224,
+        2416
       ],
-      "id": "7dd37445-b48e-4a00-bb39-60dc8cb0e4b7"
+      "id": "70b32989-c095-4b9b-bf1d-43c731f674c5"
     },
     {
       "parameters": {
@@ -867,10 +797,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        7872,
-        5472
+        2464,
+        2416
       ],
-      "id": "0a9c2dfe-f12c-4a75-8b84-69e5773b4f39"
+      "id": "4c6c89cb-3392-4c70-9937-cd86003a3cab"
     },
     {
       "parameters": {
@@ -880,10 +810,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7984,
-        5296
+        2576,
+        2240
       ],
-      "id": "5fb90eb7-df3b-4900-88dc-52ff0f38ce42"
+      "id": "99afa206-05f9-4db3-b75c-0f76eb2c7067"
     },
     {
       "parameters": {
@@ -893,10 +823,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        5536
+        2752,
+        2480
       ],
-      "id": "3efb7a55-3907-4838-9de0-d16176b83045"
+      "id": "29501e8c-ce60-456e-8e0e-5b834cc6e20b"
     },
     {
       "parameters": {
@@ -906,10 +836,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        5696
+        2752,
+        2640
       ],
-      "id": "adab9bb0-141d-4408-9f09-f50f6602bb8f"
+      "id": "7a394601-cfbf-4378-943d-f584f5923cff"
     },
     {
       "parameters": {
@@ -919,10 +849,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        5856
+        2752,
+        2800
       ],
-      "id": "35f6685b-1478-4617-9a9e-0ce372121f93"
+      "id": "6f4cd63a-656d-4073-820b-b26ce45e425d"
     },
     {
       "parameters": {
@@ -932,10 +862,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        6016
+        2752,
+        2960
       ],
-      "id": "06ae043d-de5d-4980-9d28-63a34c73c2ac"
+      "id": "7096b9d8-2132-4d57-b22b-071bdf77968d"
     },
     {
       "parameters": {
@@ -945,10 +875,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        6176
+        2752,
+        3120
       ],
-      "id": "c1cba1f9-a3f8-43f4-81e3-f6cb7cbd6abb"
+      "id": "c9c5d4b8-1953-4820-ad60-9ff4726d70fa"
     },
     {
       "parameters": {
@@ -958,10 +888,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7632,
-        6320
+        2224,
+        3264
       ],
-      "id": "e2a03209-88db-43e8-8666-449f6a7f51dc"
+      "id": "e38a4083-5b75-42c7-af2a-444aa05c4d4f"
     },
     {
       "parameters": {
@@ -988,10 +918,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        7872,
-        6320
+        2464,
+        3264
       ],
-      "id": "f1ed3105-1d0d-4d0f-b9fd-99a9cdc300c9"
+      "id": "eb35cff6-e48b-4942-a58d-90e67692bd51"
     },
     {
       "parameters": {
@@ -1001,10 +931,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7840,
-        6128
+        2432,
+        3072
       ],
-      "id": "d2fbebc6-cb0a-4026-a213-74732f228ff7"
+      "id": "23ad35b0-f5bc-4ea5-b99e-2194ea187ac8"
     },
     {
       "parameters": {
@@ -1014,10 +944,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        6368
+        2752,
+        3312
       ],
-      "id": "9410d1ee-1719-4ffc-a8e8-db2224f74d7e"
+      "id": "dbc9ae44-ad36-42e5-991b-d759c5195743"
     },
     {
       "parameters": {
@@ -1027,10 +957,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        6528
+        2752,
+        3472
       ],
-      "id": "f4a4c5aa-347f-4965-b306-d5ff4d70bf37"
+      "id": "228b9ccd-9886-4457-9262-6b3f51a69a08"
     },
     {
       "parameters": {
@@ -1040,10 +970,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        6688
+        2752,
+        3632
       ],
-      "id": "711a2ba2-2851-4b4d-a879-fb03230c2800"
+      "id": "8750f2b7-6579-4470-8964-5e7d798df842"
     },
     {
       "parameters": {
@@ -1053,10 +983,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        6848
+        2752,
+        3792
       ],
-      "id": "5ecbd52f-4471-4179-a5ac-adfe95f05192"
+      "id": "918e3fa6-b098-4318-9d09-4919079de445"
     },
     {
       "parameters": {
@@ -1066,10 +996,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8064,
-        6976
+        2656,
+        3920
       ],
-      "id": "b4d4b825-25e0-4233-920b-7a9e50db3cd2"
+      "id": "b7c1e67d-8b46-425c-88da-0932051046bc"
     },
     {
       "parameters": {
@@ -1079,10 +1009,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7632,
-        7152
+        2224,
+        4096
       ],
-      "id": "a24018af-3399-4bd4-a340-c628147734f8"
+      "id": "ab3868a6-c974-4b77-b336-d329a669528d"
     },
     {
       "parameters": {
@@ -1109,10 +1039,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        7872,
-        7152
+        2464,
+        4096
       ],
-      "id": "c33a6bc8-e972-460a-8b00-333de07e6d97"
+      "id": "8b968a00-1e48-445f-9b9a-885b716dba54"
     },
     {
       "parameters": {
@@ -1122,10 +1052,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        7120
+        2752,
+        4064
       ],
-      "id": "6cca3ab1-bfab-409a-a035-34cef8cd4f6c"
+      "id": "1db12ea3-c354-48ee-807d-9a000c97fdf7"
     },
     {
       "parameters": {
@@ -1159,13 +1089,14 @@
               "canBeUsedToMatch": true
             },
             {
-              "id": "tipo",
-              "displayName": "tipo",
+              "id": " tipo ",
+              "displayName": " tipo ",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "prioridad",
@@ -1186,22 +1117,24 @@
               "canBeUsedToMatch": true
             },
             {
-              "id": "estado",
-              "displayName": "estado",
+              "id": "estado ",
+              "displayName": "estado ",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
-              "id": "creado_por",
-              "displayName": "creado_por",
+              "id": "creado_por ",
+              "displayName": "creado_por ",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "fecha_creacion",
@@ -1222,13 +1155,14 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        8400,
-        7120
+        2992,
+        4064
       ],
-      "id": "87f8d17c-4c2b-4b51-ac84-e4a15042a201",
+      "id": "24ecda0f-3c82-4944-8fed-6f532c51eb1a",
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "oa7aEmmBE4za1VSa",
+          "id": "4UEkMo0JeO2PFx1V",
           "name": "Google Sheets account"
         }
       }
@@ -1241,10 +1175,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8640,
-        7120
+        3232,
+        4064
       ],
-      "id": "98afc925-7357-4b3c-b519-1d421aecf44a"
+      "id": "93ff5ea6-d869-49bc-862b-9dd9be4da9d2"
     },
     {
       "parameters": {
@@ -1254,10 +1188,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8880,
-        7120
+        3472,
+        4064
       ],
-      "id": "bbee95c8-4aee-4ecc-80e9-6d21f6499990"
+      "id": "4f3dbdf7-ec03-4203-847b-80d80f20df65"
     },
     {
       "parameters": {
@@ -1267,10 +1201,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        7280
+        2752,
+        4224
       ],
-      "id": "a72f988c-fecf-4f3c-baf6-5842eec484a8"
+      "id": "872551d0-1429-465f-bb45-cc66fa4ea9a1"
     },
     {
       "parameters": {
@@ -1280,10 +1214,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        7440
+        2752,
+        4384
       ],
-      "id": "a4e82427-742f-4a16-8250-47bc85911e62"
+      "id": "619429a0-8230-4302-b0b2-c61a840206b8"
     },
     {
       "parameters": {
@@ -1293,10 +1227,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        7600
+        2752,
+        4544
       ],
-      "id": "3747c51e-4a9f-4cd9-9d46-80d551194f43"
+      "id": "8d981229-b45e-4abe-828a-65c0b2045f1e"
     },
     {
       "parameters": {
@@ -1306,10 +1240,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        7760
+        2752,
+        4704
       ],
-      "id": "47cefee1-d8a4-4aac-b4b8-eb46f4258a6b"
+      "id": "09aaca2c-fa7a-4e22-9a4e-69bccbebf11e"
     },
     {
       "parameters": {
@@ -1319,10 +1253,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7632,
-        7936
+        2224,
+        4880
       ],
-      "id": "f7a842dc-4ed8-4681-970e-2c54a979cef3"
+      "id": "1d11652b-d7b2-4d1a-8f6c-9fbef11eb182"
     },
     {
       "parameters": {
@@ -1345,10 +1279,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 1,
       "position": [
-        7872,
-        7936
+        2464,
+        4880
       ],
-      "id": "12ae53fc-8d65-495f-8e7c-f1fa759d8633"
+      "id": "7e52084d-06fa-4281-abc4-d6e278e16009"
     },
     {
       "parameters": {
@@ -1382,16 +1316,16 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        8160,
-        7888
+        2752,
+        4832
       ],
       "settings": {
         "alwaysOutputData": true
       },
-      "id": "6bae9827-ed75-4afd-a7c7-f2e6b6c6aceb",
+      "id": "484e30bd-aead-461c-80c7-c23f35f051a2",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "oa7aEmmBE4za1VSa",
+          "id": "4UEkMo0JeO2PFx1V",
           "name": "Google Sheets account"
         }
       }
@@ -1404,10 +1338,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8400,
-        7856
+        2992,
+        4800
       ],
-      "id": "5aa43c48-764f-4732-b8bd-cf02f67139be"
+      "id": "9d68f2da-a7f8-4707-b7f5-b2356e114e7f"
     },
     {
       "parameters": {
@@ -1417,10 +1351,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8640,
-        7856
+        3232,
+        4800
       ],
-      "id": "744eaf40-9491-4565-aacd-384485e29390"
+      "id": "c5a4342d-72ea-421e-a3cb-c0e3b37de8b3"
     },
     {
       "parameters": {
@@ -1430,10 +1364,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        8016
+        2752,
+        4960
       ],
-      "id": "bfe307ca-010f-49d9-9053-1787855add49"
+      "id": "f515c8de-31b1-48b3-95be-24474b746073"
     },
     {
       "parameters": {
@@ -1443,10 +1377,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8160,
-        8176
+        2752,
+        5120
       ],
-      "id": "a1178c02-99c2-4fce-aff9-d85c0966c7a8"
+      "id": "63182aa9-827d-4829-803c-cc56b3eda44d"
     },
     {
       "parameters": {
@@ -1502,14 +1436,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        9760,
-        5648
+        4352,
+        2592
       ],
-      "id": "15f6dc7a-88c5-4d34-a48a-06fbdd28ffad",
+      "id": "5d78c9ec-da1c-49db-afe9-ebb66e9d81c0",
       "webhookId": "eed7132c-6cda-4f7f-9a70-da7c73b66fec",
       "credentials": {
         "telegramApi": {
-          "id": "XMlcxQ0bxqfb7urt",
+          "id": "pTwJQsdfESsk0IAl",
           "name": "Telegram account"
         }
       }
@@ -1560,14 +1494,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        9760,
-        5808
+        4352,
+        2752
       ],
-      "id": "eead39eb-ecbd-4e2e-a468-18904a217e40",
+      "id": "a1e6f152-f69c-48be-b13a-65431a5327c1",
       "webhookId": "7dcbe6b2-186e-4f59-bd73-87bf73dd406b",
       "credentials": {
         "telegramApi": {
-          "id": "XMlcxQ0bxqfb7urt",
+          "id": "pTwJQsdfESsk0IAl",
           "name": "Telegram account"
         }
       }
@@ -1618,14 +1552,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        9760,
-        5968
+        4352,
+        2912
       ],
-      "id": "2feee8af-bca0-4bb8-b4f7-6582c7996f32",
+      "id": "633a9858-a28d-483c-9961-bc6e961c6f6e",
       "webhookId": "19c8bb96-c7d2-4457-a413-9788623feb4a",
       "credentials": {
         "telegramApi": {
-          "id": "XMlcxQ0bxqfb7urt",
+          "id": "pTwJQsdfESsk0IAl",
           "name": "Telegram account"
         }
       }
@@ -1658,14 +1592,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        9760,
-        6128
+        4352,
+        3072
       ],
-      "id": "45ac017d-ddcf-4246-afdf-ce6ac518aa19",
+      "id": "842eeb68-82cd-4db3-9733-130f8ae3d39a",
       "webhookId": "9c72ea21-b994-469d-9a2a-9d4e8d9c5986",
       "credentials": {
         "telegramApi": {
-          "id": "XMlcxQ0bxqfb7urt",
+          "id": "pTwJQsdfESsk0IAl",
           "name": "Telegram account"
         }
       }
@@ -1702,14 +1636,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        9760,
-        6288
+        4352,
+        3232
       ],
-      "id": "a3e7fb1b-0fd4-4503-bd52-0d9914db4508",
+      "id": "25ccbf98-e3e4-4eae-85da-82fe466c4349",
       "webhookId": "ac09ce1e-d510-49a7-9ff6-e6430a4a17fa",
       "credentials": {
         "telegramApi": {
-          "id": "XMlcxQ0bxqfb7urt",
+          "id": "pTwJQsdfESsk0IAl",
           "name": "Telegram account"
         }
       }
@@ -1726,14 +1660,14 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        9760,
-        6448
+        4352,
+        3392
       ],
-      "id": "1a8a219d-c6c3-4cb0-9198-3932e6a05264",
+      "id": "d4292b38-31c0-4aa4-9abd-99a6596f548b",
       "webhookId": "c1377a58-0d19-4606-a1f7-d5f26adca400",
       "credentials": {
         "telegramApi": {
-          "id": "XMlcxQ0bxqfb7urt",
+          "id": "pTwJQsdfESsk0IAl",
           "name": "Telegram account"
         }
       }
@@ -1821,18 +1755,244 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        9760,
-        6608
+        4352,
+        3552
       ],
-      "id": "38630189-9294-4313-a79c-7d47b72109ad",
+      "id": "c912e1bb-9c73-46a1-897c-14c63814f4bb",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "oa7aEmmBE4za1VSa",
+          "id": "4UEkMo0JeO2PFx1V",
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"route_state\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "SHOW_MENU"
+            },
+            {
+              "value2": "MENU_PRINCIPAL",
+              "output": 1
+            },
+            {
+              "value2": "CREAR_TIPO",
+              "output": 2
+            },
+            {
+              "value2": "CREAR_PRIORIDAD",
+              "output": 3
+            },
+            {
+              "value2": "CREAR_DESCRIPCION",
+              "output": "={{ 4 }}"
+            },
+            {
+              "value2": "CREAR_CONFIRMACION",
+              "output": "={{ 5 }}"
+            },
+            {
+              "value2": "CONSULTAR_TICKET",
+              "output": "={{ 6 }}"
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "name": "Router de Estado",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        336
+      ],
+      "id": "ad6e9ee7-ebcb-4d7e-a519-f4c719c0b62d",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "",
+                    "rightValue": "={{ $json.menu_option }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "56e80aa1-1ffd-4e6d-b08b-4891b14f059e"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bcc347a4-3415-434f-a7cc-6900cc005061",
+                    "leftValue": "={{ $json.menu_option }}",
+                    "rightValue": "0",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "982c71aa-7975-4896-acb0-efa3011da22c",
+                    "leftValue": "={{ $json.menu_option }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7b956bd4-fb23-437e-b26f-c2028e8630a9",
+                    "leftValue": "={{ $json.menu_option }}",
+                    "rightValue": "2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1be31d41-6a82-48e6-8405-395ad242f69f",
+                    "leftValue": "={{ $json.menu_option }}",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "37b089e8-919d-4666-8c2e-9aef7b96262f",
+                    "leftValue": "={{ $json.menu_option }}",
+                    "rightValue": "4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "972b5b3e-811e-4a70-819d-1fe9ee3ca38d",
+                    "leftValue": "={{ $json.menu_option }}",
+                    "rightValue": "5",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2032,
+        480
+      ],
+      "id": "867f1ada-fb81-4083-9fa4-510a5afacb1e",
+      "name": "Switch"
     }
   ],
+  "pinData": {},
   "connections": {
     "Telegram Trigger": {
       "main": [
@@ -1945,43 +2105,6 @@
         ]
       ]
     },
-    "Router de Estado": {
-      "main": [
-        [
-          {
-            "node": "Preparar Menu Principal",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Log Menu Principal",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Router Opcion Menu",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Interpretar Tipo",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Interpretar Prioridad",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Preparar Menu Principal": {
       "main": [
         [
@@ -1998,53 +2121,6 @@
         [
           {
             "node": "Guardar LOGS",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Router Opcion Menu": {
-      "main": [
-        [
-          {
-            "node": "Preparar Ayuda",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Log Ayuda",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Preparar Inicio Crear",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Log Inicio Crear",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Preparar Consulta Ticket",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Log Consulta Pendiente",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Buscar Mis Solicitudes",
             "type": "main",
             "index": 0
           }
@@ -2865,6 +2941,106 @@
           }
         ]
       ]
+    },
+    "Router de Estado": {
+      "main": [
+        [
+          {
+            "node": "Log Menu Principal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Preparar Menu Principal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Ayuda",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Ayuda",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar Tipo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar Prioridad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Preparar Ayuda",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Inicio Crear",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Consulta Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar Mis Solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Router Reportes Permitidos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Configuracion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Opcion Invalida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -2872,11 +3048,11 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "a8885147-7740-43e4-857f-7b76005f838f",
+  "versionId": "59292411-cd7c-45c6-a644-ebb0cd5d6282",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "9e38adf98b44403dffe2b725bc7b8e9acb8a50970d4eb4e89464405527e279d5"
+    "instanceId": "e11664c45864a24fe5250b16e225b8a01a2fcbdfbfe166c462f1b5c3c6dd9798"
   },
-  "id": "Htwxbo2bkrO6PmiG",
+  "id": "YvwsYCcFudircG8i",
   "tags": []
 }
